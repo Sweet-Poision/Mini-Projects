@@ -1,0 +1,4 @@
+
+cd /Users/utsavraj/Desktop/Projects/C++\ Mini\ Projects/gravity\ visualizer/
+
+g++-13 -o MyExecutable main.cpp src/Display.cpp -Iinclude
