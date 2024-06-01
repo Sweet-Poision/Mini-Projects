@@ -25,8 +25,7 @@
  * - The `displayArray` always has a size equal to `flattenedSize` and reflects the current state
  *   of the on/off pixels in the display grid.
  */
-class Display
-{
+class Display {
 private:
     static constexpr int WIDTH = 100;
     static constexpr int HEIGHT = 40;

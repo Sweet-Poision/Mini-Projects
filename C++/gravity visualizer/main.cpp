@@ -1,99 +1,99 @@
-#include <thread>
-#include <chrono>
-#include <vector>
 #include "include/Display.h"
-// #include "include/Particle.h"
+#include "include/Particle.h"
+#include "include/World.h"
 
-class Particle {
-private:
-    static constexpr int DEFAULT_X_POSITION = 38;
-    static constexpr int DEFAULT_Y_POSITION = 50;
-    static constexpr double DEFAULT_X_VELOCITY = 0;
-    static constexpr double DEFAULT_Y_VELOCITY = 0;
-    static constexpr double DEFAULT_MASS = 1.0;
-    static constexpr double DEFAULT_ELASTICITY = 1.0;
+#include <cmath>
+#include <iomanip>
 
-    double _mass, _elasticity, _velocityX, _velocityY;
-    int _positionX, _positionY;
+auto simulate() -> void {
+    std::thread render;
+    Display myDisplay;
 
-public:
-    Particle(int positionX = DEFAULT_X_POSITION, int positionY = DEFAULT_Y_POSITION, double mass = DEFAULT_MASS, double elasticity = DEFAULT_ELASTICITY, double velocityX = DEFAULT_X_VELOCITY, double velocityY = DEFAULT_Y_VELOCITY) : _mass(mass), _elasticity(elasticity), _positionX(positionX), _positionY(positionY), _velocityX(velocityX), _velocityY(velocityY){}
+    myDisplay.startRendering(render);
+    
+    bool special_case = false;
+    constexpr double g = 9.8;
+    constexpr double a = 0;
+    double u =0, v = 0, y = 10, _y = 10, x = 10.0, u_x = 0, v_x = 0.0, _x = 10.0;
+    constexpr int t_ms = 33;
+    constexpr double t = t_ms * 0.001;
 
-    // Particle() : _positionX(DEFAULT_X_POSITION), _positionY(DEFAULT_Y_POSITION), _mass(DEFAULT_MASS), _elasticity(DEFAULT_ELASTICITY),  _velocityX(DEFAULT_X_VELOCITY), _velocityY(DEFAULT_Y_VELOCITY){}
-
-    auto mass() const -> double { return _mass;}
-    auto elasticity() const -> double { return _elasticity;}
-    auto positionX() const -> int { return _positionX;}
-    auto positionY() const -> int { return _positionY;}
-    auto velocityX() const -> double { return _velocityX;}
-    auto velocityY() const -> double { return _velocityY;}
-};
-
-class World {
-private:
-    std::vector<std::unique_ptr<Particle>> particles;
-    std::unique_ptr<Display> display;
-    double gravity;
-
-public:
-    World(Particle &particle_param, ...) : gravity(9.8) {
-        display = std::make_unique<Display>();
-        particles.push_back(std::make_unique<Particle>(&particle_param));
-        va_list args;
-        va_start(args, particle_param);
-        while (va_arg(args, Particle *) != nullptr) {
-            Particle *particle = va_arg(args, Particle *);
-            particles.push_back(std::make_unique<Particle>(&particle));
+    while(true) {
+        // std::cout << std::fixed << std::setprecision(18);
+        // std::cout << std::endl << std::endl;
+        // std:: cout << "Y posiion : " << y << " Current Velocity : " << u << std::endl;
+        if(y >= 39.0 && x < 99.0 && x > 1.0) {
+            // std::cout << "Case >= 39.0" << std::endl;
+            myDisplay.turnOn(38, x);
+            std::this_thread::sleep_for(std::chrono::milliseconds(t_ms));
+            myDisplay.turnOff(38, x);
+            u *= -1;
+            y = _y;
         }
-        va_end(args);
+        else if ( y < 1.0 && x < 99.0 && x > 1.0) {
+            // std::cout << "Case <= 0.0" << std::endl;
+            myDisplay.turnOn(1, x);
+            std::this_thread::sleep_for(std::chrono::milliseconds(t_ms));
+            myDisplay.turnOff(1, x);
+            u *= -1;
+            y = _y;
+        }
+        if(special_case) {
+
+        }
+        // std::cout << "turning on pixel" << std::endl;
+        myDisplay.turnOn(y, x);
+
+        //
+        if(y < 39.0 && y >= 38.0) {
+            // std::cout << "Case: Just touching the bottom boundary" << std::endl;
+            const double remaining_distance = 39.0 - y;
+            v = u*u + 2*g*remaining_distance;
+            v = sqrtl(v);
+            double temp_t = (v - u) * 1000;
+            temp_t /= g;
+            std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(2 * temp_t)));
+            u *= -1;
+        }
+
+        //
+        else if(y < 2.0 && y >= 1.0) {
+            // std::cout << "Case: Just touching the top boundary" << std::endl;
+            const double remaining_distance = 0.0 - y;
+            v = u*u + 2*g*remaining_distance;
+            v = sqrtl(v);
+            v = 0 - v;
+            double temp_t = (v -u) * 1000;
+            temp_t /= g;
+            std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(2 * temp_t)));
+            u *= -1;
+
+        }
+        _y = y;
+        _x = x;
+        // std::cout << "Calculating data for this position and waiting for required time." << std::endl;
+        y += u * t + 0.5 * g * t * t;
+        v = u + g * t;
+        u = v;
+
+        x += u_x * t + 0.5 * a * t * t;
+        v_x = u_x + a * t;
+        u_x = v_x;
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(t_ms));
+        // std::cout << "turning off pixel" << std::endl;
+        myDisplay.turnOff(_y, _x);
     }
-    World(double gravity, ...) : gravity(gravity) {
-        va_list args;
-        va_start(args, gravity);
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    myDisplay.stopRendering();
 
-        while (va_arg(args, Particle *) != nullptr) {
-            Particle *particle = va_arg(args, Particle *);
-            particles.push_back(std::make_unique<Particle>(particle));
-        }
-        va_end(args);
-    };
+    render.join();
+}
 
-    auto myThreadFunction(const Particle &particle) -> void {
-        display->turnOn(particle.positionX(), particle.positionY());
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-
-    }
-
-    auto buildWorld() const -> void {
-        const int numParticles = static_cast<int>(particles.size());
-        std::thread threads[numParticles], renderThread;
-        display->startRendering(renderThread);
-        int threadCount = 0;
-        for (auto &particle : particles) {
-            threads[threadCount] = std::thread(World::myThreadFunction, this, std::cref(particle));
-            ++threadCount;
-        }
-        for (auto &thread : threads) {
-            thread.join();
-        }
-        display->stopRendering();
-        renderThread.join();
-
-    }
-};
 
 int main() {
-    
-    Particle myParticle1, myParticle2(12);
-    World myWorld(myParticle1, myParticle2);
-    myWorld.buildWorld();
-
-    // for (int i = 0; i < 5; ++i) {
-    //     std::this_thread::sleep_for(std::chrono::seconds(1));
-    //     myDisplay.turnOn(4, 4);
-    //     std::this_thread::sleep_for(std::chrono::seconds(1));
-    //     myDisplay.turnOff(4, 4);
-    // }
-
-    
+    Particle myParticle1, myParticle2(12), myParticle3(10);
+    World myWorld(myParticle1, myParticle2, myParticle3);
+    // Display myDisplay;
+    simulate();
 }

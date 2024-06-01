@@ -1,5 +1,19 @@
 #include "../include/Particle.h"
 
-Particle::Particle(double mass = 1.0, double elasticity = 1.0, int positionX = 50, int positionY = 38, double velocityX = 0.0, double velocityY = 0.0) :
-  mass(mass), elasticity(elasticity), positionX(positionX), positionY(positionY), velocityX(velocityX), velocityY(velocityY) {};
+// Constructor
+Particle::Particle(int positionX, int positionY, double mass, double elasticity, double velocityX, double velocityY) 
+        : _mass(mass), _elasticity(elasticity), _positionX(positionX), _positionY(positionY), _velocityX(velocityX), _velocityY(velocityY){}
 
+
+// getter functions to get object parameters
+auto Particle::mass() const -> double { return _mass;}
+
+auto Particle::elasticity() const -> double { return _elasticity;}
+
+auto Particle::positionX() const -> int { return _positionX;}
+
+auto Particle::positionY() const -> int { return _positionY;}
+
+auto Particle::velocityX() const -> double { return _velocityX;}
+
+auto Particle::velocityY() const -> double { return _velocityY;}

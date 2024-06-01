@@ -1,34 +1,81 @@
 #include "../include/World.h"
 
-World::World(const double gravityY, double landElasticity, const int width, const int height)
-  : gravityY(gravityY), landElasticity(landElasticity), width(width), height(height) {}
-
-void World::addObject(Particle* particle) {
-  particles.push_back(particle);
+auto World::getParticleData() const -> void {
+    int i = 1;
+    for(auto &it: particles) {
+        std::cout << "Particle " << i << std::endl;
+        std::cout << "Particle Mass = " << it.get().mass() << std::endl;
+        std::cout << "Particle Initial PositionX = " << it.get().positionX() << std::endl;
+        std::cout << "Particle Initial PositionY = " << it.get().positionY() << std::endl;
+        std::cout << "Particle Initial VelocityX = " << it.get().velocityX() << std::endl;
+        std::cout << "Particle Initial VelocityY = " << it.get().velocityY() << std::endl;
+        std::cout << "Particle Elasticity = " << it.get().elasticity() << std::endl;
+       
+        std::cout << std::endl;
+        i++;
+    }
 }
 
-void World::update() {
-  for (Particle* particle : particles) {
-    particle->update();
-    particle->applyForce(0.0, gravityY); // Apply constant gravity
-    // Add collision handling logic here (e.g., check for land collision and update particle)
-  }
+auto World::debugData() const -> void {
+    std::cout << "Gravity: " << this->_gravity << std::endl;
+    std::cout << "Elasticity : ";
+    for(auto &it: this->_elasticity) {
+        std::cout << it << " ";
+    }
+    std::cout << std::endl << std::endl;
+    this->getParticleData();
 }
 
-void World::drawParticles() {
-  // Implement logic to draw particles on the display using display methods
-  // You can access particle positions and other properties from the particles_ vector
-  // ... (code to draw particles on the display)
+auto World::gravity() const -> double { return this->_gravity; }
+
+auto World::setGravity(const double gravity) -> void { 
+    if (gravity < 0) {
+        std::cerr << "Error: Gravity value cannot be negative!" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    this->_gravity = gravity; 
 }
 
-void World::handleCollisionWithLand(Particle* particle) {
-  // Check if particle is below the land (y-position + particle radius < 0)
-  if (particle->y + particle->radius < 0) {
-    // Calculate normal force based on particle velocity and land elasticity
-    double normalForce = -particle->vy * landElasticity;
-
-    // Update particle's vertical velocity based on the normal force
-    particle->vy = std::min(normalForce, 0.0); // Prevent upward force
-    particle->y = -particle->radius; // Set position to land surface
-  }
+auto World::setElasticity(const double elastic_value_all) -> void {
+    if (elastic_value_all < 0 || elastic_value_all > 1) {
+        std::cerr << "Error: Elasticity value must be in the range [0, 1]." << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    for(int i = 0; i < 4; ++i) {
+        this->_elasticity[0] = elastic_value_all;
+        this->_elasticity[1] = elastic_value_all;
+        this->_elasticity[2] = elastic_value_all;
+        this->_elasticity[3] = elastic_value_all;
+    }
 }
+
+auto World::setElasticity(const double elastic_value_top_bottom, const double elastic_value_left_right) -> void {
+    if (elastic_value_top_bottom < 0 || elastic_value_top_bottom > 1 || elastic_value_left_right < 0 || elastic_value_left_right > 1) {
+        std::cerr << "Error: Elasticity value must be in the range [0, 1]." << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    this->_elasticity[0] = elastic_value_top_bottom;
+    this->_elasticity[1] = elastic_value_left_right;
+    this->_elasticity[2] = elastic_value_top_bottom;
+    this->_elasticity[3] = elastic_value_left_right;
+}
+
+auto World::setElasticity(const double elastic_value_top, const double elastic_value_right, const double elastic_value_bottom, const double elastic_value_left) -> void {
+    if (elastic_value_top < 0 || elastic_value_top > 1 || elastic_value_left < 0 || elastic_value_left > 1 || elastic_value_bottom < 0 || elastic_value_bottom > 1 || elastic_value_right < 0 || elastic_value_right > 1) {
+        std::cerr << "Error: Elasticity value must be in the range [0, 1]." << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    this->_elasticity[0] = elastic_value_top;
+    this->_elasticity[1] = elastic_value_right;
+    this->_elasticity[2] = elastic_value_bottom;
+    this->_elasticity[3] = elastic_value_left;
+}
+
+auto World::elasticityTop() const -> double { return this->_elasticity[0]; }
+
+auto World::elasticityRight() const -> double { return this->_elasticity[1]; }
+
+auto World::elasticityBottom() const -> double { return this->_elasticity[2]; }
+
+auto World::elasticityLeft() const -> double { return this->_elasticity[3]; }
+
